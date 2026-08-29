@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Eligibility Questionnaire — WelfareBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="wb-navbar"></div>
+
+<main class="container py-4">
+  <div class="mx-auto" style="max-width:640px;">
+    <div class="wb-progress"><div class="wb-progress-fill" id="progress-fill" style="width:25%"></div></div>
+    <div class="wb-step-label" id="step-label">Step 1 of 4</div>
+    <div class="wb-step-title" id="step-title">A few basic details</div>
+
+    <div class="wb-card p-4">
+      <div id="step-body"></div>
+      <div class="d-flex justify-content-between mt-4">
+        <button class="btn btn-wb-outline" id="btn-back" onclick="qBack()">Back</button>
+        <button class="btn btn-wb-primary" id="btn-next" onclick="qNext()">Continue →</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/navbar.js"></script>
+<script>
+  const user = requireRole("USER");
+  if (user) renderNavbar("questionnaire");
+
+  const STATES = ["Maharashtra","Delhi","Karnataka","Tamil Nadu","Uttar Pradesh","Gujarat","West Bengal","Rajasthan","Punjab","Kerala"];
+
+  const STEPS = [
+    { key: "basics", label: "Step 1 of 4", title: "A few basic details" },
+    { key: "location", label: "Step 2 of 4", title: "Where do you live?" },
+    { key: "economic", label: "Step 3 of 4", title: "Household & income" },
+    { key: "occupation", label: "Step 4 of 4", title: "Occupation" },
+  ];
+
+  let qStep = 0;
+  const draft = { name: user ? user.name : "", age: "", gender: "", state: "", income: "", occupation: "" };
+
+  function renderStep() {
+    const step = STEPS[qStep];
+    document.getElementById("progress-fill").style.width = `${((qStep + 1) / STEPS.length) * 100}%`;
+    document.getElementById("step-label").textContent = step.label;
+    document.getElementById("step-title").textContent = step.title;
+    document.getElementById("btn-back").disabled = qStep === 0;
+    document.getElementById("btn-next").textContent = qStep === STEPS.length - 1 ? "See my results →" : "Continue →";
+
+    const body = document.getElementById("step-body");
+
+    if (step.key === "basics") {
+      body.innerHTML = `
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold small">Full name</label>
+            <input class="form-control" id="f-name" value="${escapeHtml(draft.name)}">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold small">Age</label>
+            <input class="form-control" type="number" min="1" max="110" id="f-age" value="${draft.age}">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label fw-semibold small">Gender</label>
+          <div class="d-flex gap-2 flex-wrap" id="gender-chips">
+            ${["male","female","other"].map(g => `<div class="wb-chip ${draft.gender===g?'active':''}" data-value="${g}" onclick="pickChip('gender-chips','gender','${g}')">${g[0].toUpperCase()+g.slice(1)}</div>`).join("")}
+          </div>
+        </div>`;
+    } else if (step.key === "location") {
+      body.innerHTML = `
+        <div class="mb-2">
+          <label class="form-label fw-semibold small">State</label>
+          <select class="form-select" id="f-state">
+            <option value="">Select your state</option>
+            ${STATES.map(s => `<option value="${s}" ${draft.state===s?'selected':''}>${s}</option>`).join("")}
+          </select>
+          <div class="form-text">Some schemes are state-specific and only appear for a matching state. Others apply across India.</div>
+        </div>`;
+    } else if (step.key === "economic") {
+      body.innerHTML = `
+        <div class="mb-2">
+          <label class="form-label fw-semibold small">Annual family income (₹)</label>
+          <input class="form-control" type="number" min="0" id="f-income" placeholder="e.g. 180000" value="${draft.income}">
+          <div class="form-text">Used only to compare against each scheme's income limit, where applicable.</div>
+        </div>`;
+    } else if (step.key === "occupation") {
+      const options = [["student","Student"],["farmer","Farmer"],["employed","Employed"],["self-employed","Self-employed"],["unemployed","Unemployed"]];
+      body.innerHTML = `
+        <div class="mb-2">
+          <label class="form-label fw-semibold small">Current occupation</label>
+          <div class="d-flex gap-2 flex-wrap" id="occupation-chips">
+            ${options.map(([v,l]) => `<div class="wb-chip ${draft.occupation===v?'active':''}" data-value="${v}" onclick="pickChip('occupation-chips','occupation','${v}')">${l}</div>`).join("")}
+          </div>
+        </div>`;
+    }
+  }
+
+  function pickChip(containerId, field, value) {
+    draft[field] = value;
+    document.querySelectorAll(`#${containerId} .wb-chip`).forEach(el => {
+      el.classList.toggle("active", el.dataset.value === value);
+    });
+  }
+
+  function qBack() {
+    if (qStep > 0) { qStep--; renderStep(); }
+  }
+
+  async function qNext() {
+    const step = STEPS[qStep].key;
+
+    if (step === "basics") {
+      draft.name = document.getElementById("f-name").value.trim();
+      draft.age = document.getElementById("f-age").value;
+      if (!draft.name || !draft.age || !draft.gender) { showToast("Please complete all fields before continuing."); return; }
+    } else if (step === "location") {
+      draft.state = document.getElementById("f-state").value;
+      if (!draft.state) { showToast("Please select your state."); return; }
+    } else if (step === "economic") {
+      draft.income = document.getElementById("f-income").value;
+      if (draft.income === "") { showToast("Please enter your annual income."); return; }
+    } else if (step === "occupation") {
+      if (!draft.occupation) { showToast("Please select an occupation."); return; }
+    }
+
+    if (qStep < STEPS.length - 1) {
+      qStep++;
+      renderStep();
+      return;
+    }
+
+    // Final step: submit profile
+    try {
+      await Api.saveProfile({
+        age: parseInt(draft.age, 10),
+        gender: draft.gender,
+        state: draft.state,
+        income: parseInt(draft.income, 10),
+        occupation: draft.occupation,
+      });
+      window.location.href = "dashboard.html";
+    } catch (err) {
+      showToast(err.message);
+    }
+  }
+
+  if (user) renderStep();
+</script>
+</body>
+</html>

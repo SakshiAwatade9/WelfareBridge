@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>WelfareBridge — Welfare Scheme Discovery Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="wb-navbar"></div>
+
+<main>
+  <section class="wb-hero">
+    <div class="container">
+      <div class="wb-eyebrow"><span class="dot"></span> Welfare Scheme Discovery Platform</div>
+      <h1 class="wb-hero-title">Don't search for schemes.<br><span class="accent">Let schemes find you.</span></h1>
+      <p class="wb-hero-sub mt-3 mb-4">
+        WelfareBridge matches your profile against welfare scheme eligibility rules and shows you exactly
+        what you qualify for, why and how to apply.
+      </p>
+      <div class="d-flex gap-2 flex-wrap mb-5">
+        <button class="btn btn-wb-accent px-4 py-2" onclick="startEligibility()">Check my eligibility →</button>
+        <a class="btn btn-wb-outline px-4 py-2" href="auth.html?role=ADMIN">Admin sign in</a>
+      </div>
+      <div class="wb-hero-stats">
+        <div><div class="wb-stat-num">14</div><div class="wb-stat-label">Schemes in the sample database</div></div>
+        <div><div class="wb-stat-num">6</div><div class="wb-stat-label">Categories covered</div></div>
+        <div><div class="wb-stat-num">&lt;1 min</div><div class="wb-stat-label">To complete the questionnaire</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5" style="background:#fff; border-top:1px solid var(--gray-200); border-bottom:1px solid var(--gray-200);">
+    <div class="container">
+      <div class="mb-4" style="max-width:640px;">
+        <div class="wb-section-kicker">How it works</div>
+        <h2 class="wb-section-title">From profile to application, in one flow</h2>
+        <p class="wb-section-desc">Answer a short questionnaire once. The eligibility engine compares your profile against every scheme's rules and returns a ranked, explained list.</p>
+      </div>
+      <div class="row g-3" id="flow-steps"></div>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="mb-4" style="max-width:640px;">
+        <div class="wb-section-kicker">Platform capabilities</div>
+        <h2 class="wb-section-title">Everything needed to go from confusion to application</h2>
+        <p class="wb-section-desc">The platform focuses on clarity: what you qualify for, why and the exact next step.</p>
+      </div>
+      <div class="row g-3" id="feature-cards"></div>
+    </div>
+  </section>
+
+  <section class="container mb-5">
+    <div class="p-5 text-center text-white" style="background:var(--gray-900); border-radius:20px;">
+      <div class="mx-auto" style="max-width:560px;">
+        <h2 class="fw-bold mb-2" style="font-size:26px;">Find out what you qualify for</h2>
+        <p class="mb-4" style="color:#c6cad3; font-size:14.5px;">Takes about a minute. Your information is used only to compare against scheme eligibility rules.</p>
+        <button class="btn btn-wb-accent px-4 py-2" onclick="startEligibility()">Check my eligibility →</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wb-footer">
+  <div class="container d-flex justify-content-between flex-wrap gap-2">
+    <div>© 2026 WelfareBridge. A citizen welfare scheme discovery platform.</div>
+    <div>Sample scheme data shown for demonstration purposes.</div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/navbar.js"></script>
+<script>
+  renderNavbar("landing");
+
+  const flowSteps = [
+    "Create your profile", "Answer eligibility questions", "Rule engine evaluates every scheme",
+    "Review ranked matches", "See required documents", "Apply on the official portal"
+  ];
+  document.getElementById("flow-steps").innerHTML = flowSteps.map((s, i) => `
+    <div class="col-6 col-md-4 col-lg-2">
+      <div class="wb-flow-step">
+        <span class="fnum">0${i + 1}</span>
+        <span class="flabel">${s}</span>
+      </div>
+    </div>
+  `).join("");
+
+  const features = [
+    ["🎯", "Smart eligibility checker", "Rule-based engine evaluates age, income, state, occupation and gender criteria against every scheme."],
+    ["📊", "Personalized dashboard", "Ranked scheme cards with a match percentage, so the most relevant schemes surface first."],
+    ["✅", "Plain-language explanations", "Every result states exactly which criteria were met, in plain language rather than legal terminology."],
+    ["📄", "Document checklists", "Each scheme lists the exact documents required, usable as a preparation checklist before applying."],
+    ["🔍", "Search and filtering", "Filter the scheme catalogue by category, income range, occupation, or eligibility status."],
+    ["🔖", "Save schemes for later", "Bookmark relevant schemes to a personal list without re-entering your profile."],
+    ["🔗", "Official application redirection", "Every scheme links directly to its official government application portal — no third-party processing."],
+    ["⚙️", "Admin management console", "Administrators can add, edit, and retire schemes, and monitor usage across the platform."],
+  ];
+  document.getElementById("feature-cards").innerHTML = features.map(([icon, title, desc]) => `
+    <div class="col-md-6 col-lg-3">
+      <div class="wb-feature-card">
+        <div class="wb-feature-icon">${icon}</div>
+        <div class="wb-feature-title">${title}</div>
+        <div class="wb-feature-desc">${desc}</div>
+      </div>
+    </div>
+  `).join("");
+
+  function startEligibility() {
+    const user = Auth.getUser();
+    if (user && user.role === "USER") {
+      window.location.href = "dashboard.html";
+    } else if (user && user.role === "ADMIN") {
+      showToast("You're signed in as an administrator. Log in with a citizen account to check eligibility.");
+    } else {
+      window.location.href = "auth.html?tab=register";
+    }
+  }
+</script>
+</body>
+</html>
