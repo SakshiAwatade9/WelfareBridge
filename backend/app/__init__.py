@@ -2,7 +2,6 @@ from flask import Flask, jsonify
 from .config import Config
 from .extensions import db, bcrypt, jwt, cors
 
-
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -10,7 +9,7 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": Config.CORS_ORIGINS}})
+    cors.init_app(app, resources={r"/*": {"origins": Config.CORS_ORIGINS}})
 
     from .routes.auth_routes import auth_bp
     from .routes.profile_routes import profile_bp
