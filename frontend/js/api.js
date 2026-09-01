@@ -2,7 +2,7 @@
  * Shared API client. Base URL points at the local Flask backend.
  * Change API_BASE if you run the backend on a different host/port.
  */
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://welfarebridge-1.onrender.com";
 
 const Auth = {
   getToken() { return localStorage.getItem("wb_token"); },
