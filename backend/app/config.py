@@ -18,5 +18,5 @@ class Config:
     # (not cookies), so there's no CSRF risk from allowing any origin. This also means
     # it doesn't matter whether you open the frontend via a local server or by double
     # clicking the HTML files directly (file:// origin).
-    FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "*")
-    CORS_ORIGINS = "*"
+    FRONTEND_ORIGIN = os.environ.get("https://welfarebridge-1.onrender.com", "*")
+    CORS_ORIGINS = os.environ.get("FRONTEND_ORIGIN", "*")

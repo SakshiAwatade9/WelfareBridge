@@ -2,7 +2,7 @@
  * Shared API client. Base URL points at the local Flask backend.
  * Change API_BASE if you run the backend on a different host/port.
  */
-const API_BASE = "https://welfarebridge-1.onrender.com";
+const API_BASE = "https://welfarebridge-1.onrender.com/api";
 
 const Auth = {
   getToken() { return localStorage.getItem("wb_token"); },
@@ -45,8 +45,10 @@ async function apiRequest(path, { method = "GET", body = null } = {}) {
       body: body ? JSON.stringify(body) : undefined,
     });
   } catch (err) {
-    throw new Error("Could not reach the backend. Is the Flask server running on http://localhost:5000?");
-  }
+  throw new Error(
+    "Could not reach the backend. Please check the Render backend URL and CORS settings."
+  );
+}
 
   let data = null;
   try { data = await response.json(); } catch { /* empty body is fine */ }
